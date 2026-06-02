@@ -1,13 +1,20 @@
 package com.reservahotel.reservasapplication.presentation.navigation
 
 sealed class Screen(val route: String) {
-    object Login : Screen("login")
-    object AdminDashboard : Screen("admin_dashboard")
-    object Habitaciones : Screen("habitaciones")
-    object AddEditHabitacion : Screen("add_edit_habitacion/{habitacionId}") {
-        fun createRoute(habitacionId: Int = -1) = "add_edit_habitacion/$habitacionId"
+    object Login : Screen("login_route")
+    object AdminDashboard : Screen("admin_dashboard_route")
+    object Habitaciones : Screen("habitaciones_route")
+    object Categorias : Screen("categorias_route")
+    object Reservas : Screen("reservas_route")
+
+    // AGREGA ESTAS TRES LÍNEAS AQUÍ:
+    object Usuarios : Screen("usuarios_route")
+    object Reportes : Screen("reportes_route")
+    object Configuracion : Screen("config_route")
+
+    object AddEditHabitacion : Screen("add_edit_habitacion_route/{habitacionId}") {
+        fun createRoute(habitacionId: Int = -1) = "add_edit_habitacion_route/$habitacionId"
     }
-    object Categorias : Screen("categorias")
-    object Reservas : Screen("reservas")
-    object UserHome : Screen("user_home")
+
+    object UserHome : Screen("user_home_route")
 }

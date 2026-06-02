@@ -6,79 +6,64 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.reservahotel.reservasapplication.domain.model.Category
-import com.reservahotel.reservasapplication.domain.model.CategoryPayload
-import com.reservahotel.reservasapplication.domain.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class CategoryViewModel @Inject constructor(
-    private val repository: CategoryRepository
-) : ViewModel() {
+class CategoryViewModel @Inject constructor() : ViewModel() {
 
     var state by mutableStateOf(CategoryState())
         private set
 
-    init {
-        getCategories()
-    }
+    private var categoriasSimuladas = mutableListOf(
+        Category(1, "Económica", "economica", "Habitaciones sencillas con servicios básicos.", true, 12, "2026-01-15"),
+        Category(2, "Ejecutiva", "ejecutiva", "Diseñadas para viajes de negocios. Cuenta con escritorio.", true, 8, "2026-02-10"),
+        Category(3, "Premium Suites", "premium-suites", "Máximo lujo. Incluye jacuzzi privado.", false, 4, "2026-03-01")
+    )
 
-    fun getCategories() {
+    init { getCategorias() }
+
+    fun getCategorias() {
         viewModelScope.launch {
             state = state.copy(isLoading = true)
-            repository.getCategories()
-                .onSuccess {
-                    state = state.copy(categories = it, isLoading = false)
-                }
-                .onFailure {
-                    state = state.copy(error = it.message, isLoading = false)
-                }
+            state = state.copy(categorias = categoriasSimuladas.toList(), isLoading = false)
         }
     }
 
-    fun saveCategory(payload: CategoryPayload, id: Int? = null) {
+    fun toggleCategoryStatus(id: Int) {
         viewModelScope.launch {
-            state = state.copy(isLoading = true)
-            val result = if (id != null) {
-                repository.updateCategory(id, payload)
-            } else {
-                repository.createCategory(payload)
-            }
-
-            result.onSuccess {
-                getCategories()
-                state = state.copy(isLoading = false, isSuccess = true)
-            }.onFailure {
-                state = state.copy(error = it.message, isLoading = false)
+            val index = categoriasSimuladas.indexOfFirst { it.id == id }
+            if (index != -1) {
+                categoriasSimuladas[index] = categoriasSimuladas[index].copy(isActive = !categoriasSimuladas[index].isActive)
+                getCategorias()
             }
         }
     }
 
-    fun deleteCategory(id: Int) {
+    // =========================================================================
+    // NUEVA FUNCIÓN: Guarda dinámicamente una nueva categoría creada en la app
+    // =========================================================================
+    fun addCategory(name: String, description: String) {
         viewModelScope.launch {
-            repository.deleteCategory(id)
-                .onSuccess {
-                    getCategories()
-                }
-                .onFailure {
-                    state = state.copy(error = it.message)
-                }
+            val nuevoId = (categoriasSimuladas.maxOfOrNull { it.id } ?: 0) + 1
+            val nuevaCat = Category(
+                id = nuevoId,
+                name = name,
+                slug = name.lowercase().replace(" ", "-"),
+                description = description,
+                isActive = true,
+                totalProducts = 0,
+                createdAt = "2026-06-01"
+            )
+            categoriasSimuladas.add(nuevaCat)
+            getCategorias() // Refresca la pantalla al instante
         }
-    }
-
-    fun resetSuccess() {
-        state = state.copy(isSuccess = false)
-    }
-
-    fun getCategoryById(id: Int): Category? {
-        return state.categories.find { it.id == id }
     }
 }
 
 data class CategoryState(
-    val categories: List<Category> = emptyList(),
+    val categorias: List<Category> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val isSuccess: Boolean = false
+    val error: String? = null
 )

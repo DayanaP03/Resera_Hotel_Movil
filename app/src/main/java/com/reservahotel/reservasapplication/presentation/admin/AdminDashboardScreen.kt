@@ -1,6 +1,5 @@
 package com.reservahotel.reservasapplication.presentation.admin
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -11,19 +10,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reservahotel.reservasapplication.theme.*
-import androidx.compose.material.icons.filled.ExitToApp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboardScreen(
     onLogout: () -> Unit,
     onNavigateToHabitaciones: () -> Unit,
     onNavigateToCategorias: () -> Unit,
-    onNavigateToReservas: () -> Unit
+    onNavigateToReservas: () -> Unit,
+    onNavigateToUsuarios: () -> Unit,
+    onNavigateToReportes: () -> Unit,
+    onNavigateToConfiguracion: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -32,7 +35,7 @@ fun AdminDashboardScreen(
                 actions = {
                     IconButton(onClick = onLogout) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.Default.ExitToApp, // Cambiado a ExitToApp que es más lógico
                             contentDescription = "Cerrar sesión"
                         )
                     }
@@ -79,6 +82,9 @@ fun AdminDashboardScreen(
                             "Habitaciones" -> onNavigateToHabitaciones()
                             "Categorías" -> onNavigateToCategorias()
                             "Reservas" -> onNavigateToReservas()
+                            "Usuarios" -> onNavigateToUsuarios()
+                            "Reportes" -> onNavigateToReportes()
+                            "Configuración" -> onNavigateToConfiguracion()
                         }
                     }
                 }
@@ -87,7 +93,7 @@ fun AdminDashboardScreen(
     }
 }
 
-data class AdminMenuItem(val title: String, val icon: ImageVector, val color: androidx.compose.ui.graphics.Color)
+data class AdminMenuItem(val title: String, val icon: ImageVector, val color: Color)
 
 @Composable
 fun AdminCard(item: AdminMenuItem, onClick: () -> Unit) {
