@@ -127,18 +127,22 @@ class MainActivity : ComponentActivity() {
                         }
 
                         composable(Screen.Reportes.route) {
-                            PlaceholderScreen(title = "Reportes y Estadísticas", onBack = { navController.popBackStack() })
+                            // Borra la línea de PlaceholderScreen y coloca esta:
+                            ReportsScreen(
+                                onBack = { navController.popBackStack() }
+                            )
                         }
 
                         composable(Screen.Configuracion.route) {
-                            PlaceholderScreen(title = "Configuraciones", onBack = { navController.popBackStack() })
+                            SettingsScreen(onBack = { navController.popBackStack() })
+                        }
                         }
                     }
                 }
             }
         }
     }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
