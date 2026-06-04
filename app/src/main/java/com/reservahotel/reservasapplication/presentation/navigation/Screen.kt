@@ -6,6 +6,7 @@ sealed class Screen(val route: String) {
     object Habitaciones : Screen("habitaciones_route")
     object Categorias : Screen("categorias_route")
     object Reservas : Screen("reservas_route")
+    object MisReservas : Screen("mis_reservas_route")
 
     // AGREGA ESTAS TRES LÍNEAS AQUÍ:
     object Usuarios : Screen("usuarios_route")

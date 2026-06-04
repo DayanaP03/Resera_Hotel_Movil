@@ -28,16 +28,34 @@ class AuthViewModel @Inject constructor(
 
     fun login(onSuccess: (String) -> Unit) {
         viewModelScope.launch {
-            // 1. Simulamos que está cargando por un milisegundo
-            uiState = uiState.copy(isLoading = true, error = null)
 
-            // 2. Quitamos la carga
-            uiState = uiState.copy(isLoading = false)
+            uiState = uiState.copy(
+                isLoading = true,
+                error = null
+            )
 
-            // 3. ¡EL TRUCO TRUCADO! Forzamos que entre directo con el rol "admin"
-            // Ya no llamamos a repository.login() para evitar el error 400 del servidor
-            onSuccess("admin")
+            repository.login(
+                uiState.username,
+                uiState.password
+            )
+                .onSuccess { response ->
+
+                    uiState = uiState.copy(
+                        isLoading = false
+                    )
+
+                    onSuccess(response.rol ?: "usuario")
+                }
+                .onFailure { error ->
+
+                    uiState = uiState.copy(
+                        isLoading = false,
+                        error = error.message ?: "Error al iniciar sesión"
+                    )
+                }
         }
+
+
     }
 
     fun logout() {

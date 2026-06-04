@@ -23,7 +23,7 @@ import com.reservahotel.reservasapplication.theme.*
 fun AddEditHabitacionScreen(
     habitacionId: Int,
     onBack: () -> Unit,
-    viewModel: HabitacionViewModel = hiltViewModel()
+    viewModel: HabitacionViewModel
 ) {
     val isEdit = habitacionId != -1
     val habitacionToEdit = remember(habitacionId) { viewModel.getHabitacionById(habitacionId) }

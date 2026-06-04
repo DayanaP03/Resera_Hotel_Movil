@@ -3,7 +3,7 @@ package com.reservahotel.reservasapplication.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 data class LoginRequest(
-    val username: String,
+    val email: String,
     val password: String,
 )
 
@@ -17,7 +17,7 @@ data class AuthResponseDto(
     @SerializedName("user_id")  val userId:  Int,
     val username: String,
     val email:    String,
-    val rol:      String,
+    val rol:      String? = "usuario",
 )
 
 data class TokenRefreshResponseDto(

@@ -29,7 +29,7 @@ fun CategoriesScreen(
     onBack: () -> Unit,
     onAddCategory: () -> Unit,
     onEditCategory: (Int) -> Unit,
-    viewModel: CategoryViewModel = hiltViewModel()
+    viewModel: CategoryViewModel
 ) {
     val state = viewModel.state
 

@@ -1,4 +1,4 @@
-package com.reservahotel.reservasapplication.presentation.admin
+package com.reservahotel.reservasapplication.presentation.client
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

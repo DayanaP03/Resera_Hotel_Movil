@@ -1,4 +1,4 @@
-package com.reservahotel.reservasapplication.presentation.admin
+package com.reservahotel.reservasapplication.presentation.client
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,16 +20,43 @@ class HabitacionViewModel @Inject constructor(
         private set
 
     private var habitacionesSimuladas = mutableListOf(
-        Habitacion(1, "101", "Matrimonial Standard", "45.0", "Disponible", "Cama matrimonial.", 2),
-        Habitacion(2, "102", "Suite Presidencial", "120.0", "Disponible", "Lujo total.", 4),
-        Habitacion(3, "201", "Doble Familiar", "75.0", "Ocupada", "Familiar.", 3)
+        Habitacion(
+            id = 1,
+            numero = "101",
+            tipo = "Matrimonial Standard",
+            precio_noche = "45.0",
+            estado = "Disponible",
+            descripcion = "Una hermosa habitación con cama matrimonial y vista interna.",
+            capacidad = 2
+        ),
+        Habitacion(
+            id = 2,
+            numero = "102",
+            tipo = "Suite Presidencial",
+            precio_noche = "120.0",
+            estado = "Disponible",
+            descripcion = "Suite de lujo con jacuzzi y balcón hacia la calle principal.",
+            capacidad = 4
+        ),
+        Habitacion(
+            id = 3,
+            numero = "201",
+            tipo = "Doble Familiar",
+            precio_noche = "75.0",
+            estado = "Ocupada",
+            descripcion = "Dos camas de plaza y media, ideal para viajes familiares.",
+            capacidad = 3
+        )
     )
 
-    init { getHabitaciones() }
+    init {
+        getHabitaciones()
+    }
 
     fun getHabitaciones() {
         viewModelScope.launch {
-            state = state.copy(isLoading = true)
+            state = state.copy(isLoading = true, error = null)
+            // Usamos .toList() para que Compose detecte el cambio de estado
             state = state.copy(habitaciones = habitacionesSimuladas.toList(), isLoading = false)
         }
     }
@@ -44,20 +71,29 @@ class HabitacionViewModel @Inject constructor(
     fun saveHabitacion(habitacion: Habitacion, isEdit: Boolean) {
         viewModelScope.launch {
             state = state.copy(isLoading = true)
+
             if (isEdit) {
                 val index = habitacionesSimuladas.indexOfFirst { it.id == habitacion.id }
-                if (index != -1) habitacionesSimuladas[index] = habitacion
+                if (index != -1) {
+                    habitacionesSimuladas[index] = habitacion
+                }
             } else {
                 val nuevoId = (habitacionesSimuladas.maxOfOrNull { it.id } ?: 0) + 1
                 habitacionesSimuladas.add(habitacion.copy(id = nuevoId))
             }
+
             getHabitaciones()
             state = state.copy(isLoading = false, isSuccess = true)
         }
     }
 
-    fun resetSuccess() { state = state.copy(isSuccess = false) }
-    fun getHabitacionById(id: Int): Habitacion? = state.habitaciones.find { it.id == id }
+    fun resetSuccess() {
+        state = state.copy(isSuccess = false)
+    }
+
+    fun getHabitacionById(id: Int): Habitacion? {
+        return state.habitaciones.find { it.id == id }
+    }
 }
 
 data class HabitacionState(

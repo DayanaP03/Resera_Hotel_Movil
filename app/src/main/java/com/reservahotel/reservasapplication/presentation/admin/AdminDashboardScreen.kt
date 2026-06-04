@@ -28,16 +28,23 @@ fun AdminDashboardScreen(
     onNavigateToReportes: () -> Unit,
     onNavigateToConfiguracion: () -> Unit
 ) {
+    // Definimos el mapa de acciones aquí para que sea limpio y seguro
+    val acciones = mapOf(
+        "Habitaciones" to onNavigateToHabitaciones,
+        "Reservas" to onNavigateToReservas,
+        "Categorías" to onNavigateToCategorias,
+        "Usuarios" to onNavigateToUsuarios,
+        "Reportes" to onNavigateToReportes,
+        "Configuración" to onNavigateToConfiguracion
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Panel de Administración", fontWeight = FontWeight.Bold) },
                 actions = {
                     IconButton(onClick = onLogout) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp, // Cambiado a ExitToApp que es más lógico
-                            contentDescription = "Cerrar sesión"
-                        )
+                        Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar sesión")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -78,14 +85,8 @@ fun AdminDashboardScreen(
             ) {
                 items(menuItems) { item ->
                     AdminCard(item) {
-                        when(item.title) {
-                            "Habitaciones" -> onNavigateToHabitaciones()
-                            "Categorías" -> onNavigateToCategorias()
-                            "Reservas" -> onNavigateToReservas()
-                            "Usuarios" -> onNavigateToUsuarios()
-                            "Reportes" -> onNavigateToReportes()
-                            "Configuración" -> onNavigateToConfiguracion()
-                        }
+                        // Ejecuta la función asociada al título en el mapa
+                        acciones[item.title]?.invoke()
                     }
                 }
             }
@@ -99,9 +100,7 @@ data class AdminMenuItem(val title: String, val icon: ImageVector, val color: Co
 fun AdminCard(item: AdminMenuItem, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .height(120.dp)
-            .fillMaxWidth(),
+        modifier = Modifier.height(120.dp).fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, Border),
         shape = Shapes.medium
@@ -111,19 +110,9 @@ fun AdminCard(item: AdminMenuItem, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = item.title,
-                tint = item.color,
-                modifier = Modifier.size(32.dp)
-            )
+            Icon(item.icon, contentDescription = item.title, tint = item.color, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = item.title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = TextPrimary
-            )
+            Text(item.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
         }
     }
 }

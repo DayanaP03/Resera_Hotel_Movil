@@ -6,33 +6,30 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.reservahotel.reservasapplication.domain.model.Habitacion
+import com.reservahotel.reservasapplication.domain.model.Reserva
+import com.reservahotel.reservasapplication.presentation.client.ReservaViewModel
 import com.reservahotel.reservasapplication.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HabitacionesScreen(
-    viewModel: HabitacionViewModel,
-    onBack: () -> Unit,
-    onAddHabitacion: () -> Unit,
-    onEditHabitacion: (Int) -> Unit
+fun ReservasScreen(
+    viewModel: ReservaViewModel,
+    onBack: () -> Unit
 ) {
     val state = viewModel.state
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestión Admin - Habitaciones", fontWeight = FontWeight.Bold) },
+                title = { Text("Gestión Admin - Reservas", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -44,28 +41,24 @@ fun HabitacionesScreen(
                 )
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddHabitacion,
-                containerColor = Accent,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar")
-            }
-        },
         containerColor = Background
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        if (state.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Accent)
+            }
+        } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(state.habitaciones) { habitacion ->
-                    HabitacionAdminItem(
-                        habitacion = habitacion,
-                        onEdit = { onEditHabitacion(habitacion.id) },
-                        onDelete = { viewModel.deleteHabitacion(habitacion.id) }
+                items(state.reservas) { reserva ->
+                    ReservaAdminItem(
+                        reserva = reserva,
+                        onDelete = { viewModel.deleteReserva(reserva.id) }
                     )
                 }
             }
@@ -74,9 +67,8 @@ fun HabitacionesScreen(
 }
 
 @Composable
-fun HabitacionAdminItem(
-    habitacion: Habitacion,
-    onEdit: () -> Unit,
+fun ReservaAdminItem(
+    reserva: Reserva,
     onDelete: () -> Unit
 ) {
     Card(
@@ -85,13 +77,20 @@ fun HabitacionAdminItem(
         border = BorderStroke(1.dp, Border),
         shape = Shapes.medium
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(habitacion.numero, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text(habitacion.tipo, color = TextSecondary)
+                Text("Reserva #${reserva.id}", fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text("Habitación: ${reserva.habitacion}", color = TextSecondary)
+                Text("Cliente ID: ${reserva.cliente}", color = TextSecondary)
+                Text("Desde: ${reserva.fecha_entrada} Hasta: ${reserva.fecha_salida}", color = TextSecondary)
+                Text("Estado: ${reserva.estado}", color = Accent, fontWeight = FontWeight.Medium)
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, "Editar", tint = Info) }
-            IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Borrar", tint = com.reservahotel.reservasapplication.theme.Error) }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = com.reservahotel.reservasapplication.theme.Error)
+            }
         }
     }
 }

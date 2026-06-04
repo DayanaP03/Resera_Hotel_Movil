@@ -74,7 +74,7 @@ class TokenDataStore @Inject constructor(
             id       = id,
             username = prefs[KEY_USERNAME] ?: "",
             email    = prefs[KEY_EMAIL]    ?: "",
-            rol      = prefs[KEY_ROL]      ?: "",
+            rol      = prefs[KEY_ROL].let { if (it.isNullOrBlank()) "usuario" else it },
         )
     }
 }
