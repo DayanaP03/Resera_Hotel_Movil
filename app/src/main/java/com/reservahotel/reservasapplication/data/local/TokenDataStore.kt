@@ -25,6 +25,7 @@ class TokenDataStore @Inject constructor(
         val KEY_USERNAME = stringPreferencesKey("username")
         val KEY_EMAIL    = stringPreferencesKey("email")
         val KEY_ROL      = stringPreferencesKey("rol")
+        val KEY_IS_STAFF = booleanPreferencesKey("is_staff")
     }
 
     val accessToken: Flow<String?>  = context.dataStore.data.map { it[KEY_ACCESS]  }
@@ -48,12 +49,13 @@ class TokenDataStore @Inject constructor(
         context.dataStore.edit { it[KEY_ACCESS] = access }
     }
 
-    suspend fun saveUser(id: Int, username: String, email: String, rol: String) {
+    suspend fun saveUser(id: Int, username: String, email: String, rol: String, isStaff: Boolean = false) {
         context.dataStore.edit { prefs ->
             prefs[KEY_USER_ID]  = id
             prefs[KEY_USERNAME] = username
             prefs[KEY_EMAIL]    = email
             prefs[KEY_ROL]      = rol
+            prefs[KEY_IS_STAFF] = isStaff
         }
     }
 
@@ -66,15 +68,18 @@ class TokenDataStore @Inject constructor(
         val username: String,
         val email:    String,
         val rol:      String,
+        val isStaff:  Boolean = false,
     )
 
     val userSnapshot: Flow<UserSnapshot?> = context.dataStore.data.map { prefs ->
         val id = prefs[KEY_USER_ID] ?: return@map null
+        val rol = prefs[KEY_ROL]?.trim()?.lowercase() ?: "cliente"
         UserSnapshot(
             id       = id,
             username = prefs[KEY_USERNAME] ?: "",
             email    = prefs[KEY_EMAIL]    ?: "",
-            rol      = prefs[KEY_ROL].let { if (it.isNullOrBlank()) "usuario" else it },
+            rol      = rol,
+            isStaff  = rol == "administrador",   // derivado del rol, no del campo is_staff
         )
     }
 }

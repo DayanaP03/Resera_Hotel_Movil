@@ -1,267 +1,250 @@
 package com.reservahotel.reservasapplication.presentation.admin
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.reservahotel.reservasapplication.domain.model.Category
+import com.reservahotel.reservasapplication.domain.model.Servicio
 import com.reservahotel.reservasapplication.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(
     onBack: () -> Unit,
-    onAddCategory: () -> Unit,
-    onEditCategory: (Int) -> Unit,
-    viewModel: CategoryViewModel
+    onAddCategory: () -> Unit,   // kept for nav compat, unused
+    onEditCategory: (Int) -> Unit, // kept for nav compat, unused
+    viewModel: CategoryViewModel,
 ) {
     val state = viewModel.state
-
     var showDialog by remember { mutableStateOf(false) }
-    var nuevoNombre by remember { mutableStateOf("") }
-    var nuevaDescripcion by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Gestión de Categorías", fontWeight = FontWeight.Bold) },
+                title = { Text("Servicios", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Surface,
-                    titleContentColor = TextPrimary
-                )
+                    titleContentColor = TextPrimary,
+                ),
             )
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showDialog = true },
+                onClick  = { showDialog = true },
                 containerColor = Accent,
-                contentColor = Color.White
+                contentColor   = Color.White,
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar Categoría")
+                Icon(Icons.Default.Add, contentDescription = "Agregar Servicio")
             }
         },
-        containerColor = Background
+        containerColor = Background,
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(state.categorias) { category ->
-                    CategoryItem(
-                        category = category,
-                        onEdit = { onEditCategory(category.id) },
-                        onToggleActive = { viewModel.toggleCategoryStatus(category.id) }
-                    )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            when {
+                state.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Accent)
+                }
+                state.error != null -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(Icons.Default.WifiOff, null, tint = TextSecondary, modifier = Modifier.size(48.dp))
+                        Spacer(Modifier.height(12.dp))
+                        Text("No se pudieron cargar los servicios", color = TextSecondary)
+                        Text(state.error, color = TextFaint, fontSize = 12.sp)
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.loadServicios() },
+                            colors  = ButtonDefaults.buttonColors(containerColor = Accent),
+                        ) { Text("Reintentar") }
+                    }
+                }
+                state.servicios.isEmpty() -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(Icons.Default.RoomService, null, tint = TextFaint, modifier = Modifier.size(48.dp))
+                        Spacer(Modifier.height(8.dp))
+                        Text("No hay servicios registrados", color = TextFaint)
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(state.servicios) { servicio ->
+                            ServicioCard(
+                                servicio      = servicio,
+                                onToggle      = { viewModel.toggleActivo(servicio.id) },
+                                onDelete      = { viewModel.deleteServicio(servicio.id) },
+                            )
+                        }
+                    }
                 }
             }
-
-            if (showDialog) {
-                AlertDialog(
-                    onDismissRequest = { showDialog = false },
-                    title = { Text("Nueva Categoría", fontWeight = FontWeight.Bold, color = TextPrimary) },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedTextField(
-                                value = nuevoNombre,
-                                onValueChange = { nuevoNombre = it },
-                                label = { Text("Nombre de la categoría") },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            OutlinedTextField(
-                                value = nuevaDescripcion,
-                                onValueChange = { nuevaDescripcion = it },
-                                label = { Text("Descripción corta") },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                                maxLines = 3
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                if (nuevoNombre.isNotBlank() && nuevaDescripcion.isNotBlank()) {
-                                    viewModel.addCategory(nuevoNombre, nuevaDescripcion)
-                                    nuevoNombre = ""
-                                    nuevaDescripcion = ""
-                                    showDialog = false
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Accent)
-                        ) {
-                            Text("Guardar", color = Color.White)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showDialog = false }) {
-                            Text("Cancelar", color = TextSecondary)
-                        }
-                    },
-                    containerColor = Surface,
-                    shape = RoundedCornerShape(16.dp)
-                )
-            }
         }
+    }
+
+    // ── Diálogo nuevo servicio ────────────────────────────────────────────────
+    if (showDialog) {
+        var nombre      by remember { mutableStateOf("") }
+        var descripcion by remember { mutableStateOf("") }
+        var precio      by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor   = Surface,
+            shape            = RoundedCornerShape(16.dp),
+            title = {
+                Text("Nuevo Servicio", fontWeight = FontWeight.Bold, color = TextPrimary)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value         = nombre,
+                        onValueChange = { nombre = it },
+                        label         = { Text("Nombre del servicio") },
+                        modifier      = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value         = descripcion,
+                        onValueChange = { descripcion = it },
+                        label         = { Text("Descripción") },
+                        modifier      = Modifier.fillMaxWidth(),
+                        maxLines      = 3,
+                    )
+                    OutlinedTextField(
+                        value          = precio,
+                        onValueChange  = { precio = it },
+                        label          = { Text("Precio (L.)") },
+                        modifier       = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (nombre.isNotBlank() && precio.isNotBlank()) {
+                            viewModel.addServicio(nombre, descripcion, precio)
+                            showDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                ) { Text("Guardar", color = Color.White) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+        )
     }
 }
 
 @Composable
-fun CategoryItem(
-    category: Category,
-    onEdit: () -> Unit,
-    onToggleActive: () -> Unit
+private fun ServicioCard(
+    servicio: Servicio,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit,
 ) {
-    // Estado local para saber si esta tarjeta específica está expandida o no
-    var isExpanded by remember { mutableStateOf(false) }
-
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { isExpanded = !isExpanded } // Al hacer clic, se despliega/encoge
-            .animateContentSize(), // Animación automática de tamaño suave
-        colors = CardDefaults.cardColors(containerColor = Surface),
-        shape = CardDefaults.elevatedShape
+        modifier = Modifier.fillMaxWidth(),
+        colors   = CardDefaults.cardColors(containerColor = Surface),
+        border   = BorderStroke(1.dp, Border),
+        shape    = Shapes.medium,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Icono
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Accent.copy(alpha = 0.12f),
+                modifier = Modifier.size(44.dp),
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = category.name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.RoomService,
+                        contentDescription = null,
+                        tint     = Accent,
+                        modifier = Modifier.size(24.dp),
                     )
-                    Text(
-                        text = category.description,
-                        fontSize = 14.sp,
-                        color = TextSecondary,
-                        maxLines = if (isExpanded) 10 else 1 // Si está expandido muestra todo, si no, se corta
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Accent)
-                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.width(12.dp))
 
-            // Switch de estado siempre visible e interactivo
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            // Info
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (category.isActive) "ACTIVA" else "INACTIVA",
-                    color = if (category.isActive) Color(0xFF4CAF50) else Color.Red,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    text       = servicio.nombre,
+                    fontWeight = FontWeight.Bold,
+                    color      = TextPrimary,
+                    fontSize   = 15.sp,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Switch(
-                    checked = category.isActive,
-                    onCheckedChange = { _ -> onToggleActive() },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Color(0xFF4CAF50)
-                    )
-                )
-            }
-
-            // =========================================================================
-            // ¡ZONA DESPLEGABLE!: Se muestra únicamente si isExpanded es true
-            // =========================================================================
-            AnimatedVisibility(visible = isExpanded) {
-                Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider(color = TextSecondary.copy(alpha = 0.2f))
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Mostramos los campos internos de tu Category.kt que estaban ocultos
+                if (!servicio.descripcion.isNullOrBlank()) {
                     Text(
-                        text = "Slug del sistema: /${category.slug}",
-                        color = TextSecondary,
-                        fontSize = 13.sp
+                        text     = servicio.descripcion,
+                        color    = TextSecondary,
+                        fontSize = 12.sp,
+                        maxLines = 2,
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Fecha de registro: ${category.createdAt}",
-                        color = TextSecondary,
-                        fontSize = 13.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            color = Accent.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            Text(
-                                text = "Habitaciones enlazadas: ${category.totalProducts}",
-                                color = Accent,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "Toca para contraer ▲",
-                            color = TextSecondary.copy(alpha = 0.6f),
-                            fontSize = 11.sp
-                        )
-                    }
                 }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text       = "L. ${servicio.precio}",
+                    color      = Accent,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 14.sp,
+                )
             }
 
-            // Un pequeño indicador visual cuando la tarjeta está cerrada
-            if (!isExpanded) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterEnd
-                ) {
-                    Text(
-                        text = "Ver más ▼",
-                        color = TextSecondary.copy(alpha = 0.5f),
-                        fontSize = 11.sp
-                    )
+            // Controles
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Switch(
+                    checked         = servicio.activo,
+                    onCheckedChange = { onToggle() },
+                    colors          = SwitchDefaults.colors(
+                        checkedTrackColor = Success,
+                        checkedThumbColor = Color.White,
+                    ),
+                )
+                Text(
+                    text     = if (servicio.activo) "Activo" else "Inactivo",
+                    fontSize = 10.sp,
+                    color    = if (servicio.activo) Success else TextFaint,
+                )
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Delete, null, tint = Error, modifier = Modifier.size(18.dp))
                 }
             }
         }

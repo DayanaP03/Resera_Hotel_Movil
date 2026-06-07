@@ -3,35 +3,43 @@ package com.reservahotel.reservasapplication.presentation.auth
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.reservahotel.reservasapplication.domain.repository.CategoryRepository
+import com.reservahotel.reservasapplication.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val repository: CategoryRepository
+    private val repository: AuthRepository,
 ) : ViewModel() {
 
-    // Aquí guardamos lo que el usuario va escribiendo en la pantalla
-    var username = mutableStateOf("")
-    var password = mutableStateOf("")
+    var username      = mutableStateOf("")
+    var email         = mutableStateOf("")
+    var password      = mutableStateOf("")
+    var password2     = mutableStateOf("")
+    var isRegistered  = mutableStateOf(false)
+    var errorMessage  = mutableStateOf("")
+    var isLoading     = mutableStateOf(false)
 
-    // Estos estados nos dicen si el registro fue exitoso o si hubo un error
-    var isRegistered = mutableStateOf(false)
-    var errorMessage = mutableStateOf("")
-
-    // Esta función se ejecuta cuando el usuario le da al botón "REGISTRARSE"
     fun onRegisterClick() {
+        if (password.value != password2.value) {
+            errorMessage.value = "Las contraseñas no coinciden"
+            return
+        }
         viewModelScope.launch {
-            // Llamamos al repositorio para intentar registrar al usuario
-            val result = repository.registerUser(username.value, password.value)
-
+            isLoading.value = true
+            errorMessage.value = ""
+            val result = repository.register(
+                username  = username.value,
+                email     = email.value,
+                password  = password.value,
+                password2 = password2.value,
+            )
+            isLoading.value = false
             if (result.isSuccess) {
                 isRegistered.value = true
-                errorMessage.value = "" // Limpiamos errores si todo sale bien
             } else {
-                errorMessage.value = result.exceptionOrNull()?.message ?: "Error al registrar el usuario"
+                errorMessage.value = result.exceptionOrNull()?.message ?: "Error al registrar"
             }
         }
     }

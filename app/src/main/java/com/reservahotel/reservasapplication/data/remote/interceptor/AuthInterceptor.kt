@@ -28,7 +28,7 @@ class AuthInterceptor @Inject constructor(
         val gson     = Gson()
         val body     = gson.toJson(TokenRefreshRequest(refresh))
         val request  = Request.Builder()
-            .url("${BuildConfig.API_BASE_URL}auth/token/refresh/")
+            .url("${BuildConfig.API_BASE_URL}auth/refresh/")
             .post(body.toRequestBody("application/json".toMediaType()))
             .build()
 

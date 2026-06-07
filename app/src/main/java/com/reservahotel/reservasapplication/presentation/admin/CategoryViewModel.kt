@@ -5,65 +5,71 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.reservahotel.reservasapplication.domain.model.Category
+import com.reservahotel.reservasapplication.domain.model.Servicio
+import com.reservahotel.reservasapplication.domain.repository.ServicioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// Renombrado internamente a ServicioViewModel pero mantenemos el nombre CategoryViewModel
+// para no romper los composables existentes que lo inyectan con hiltViewModel()
 @HiltViewModel
-class CategoryViewModel @Inject constructor() : ViewModel() {
+class CategoryViewModel @Inject constructor(
+    private val repository: ServicioRepository,
+) : ViewModel() {
 
     var state by mutableStateOf(CategoryState())
         private set
 
-    private var categoriasSimuladas = mutableListOf(
-        Category(1, "Económica", "economica", "Habitaciones sencillas con servicios básicos.", true, 12, "2026-01-15"),
-        Category(2, "Ejecutiva", "ejecutiva", "Diseñadas para viajes de negocios. Cuenta con escritorio.", true, 8, "2026-02-10"),
-        Category(3, "Premium Suites", "premium-suites", "Máximo lujo. Incluye jacuzzi privado.", false, 4, "2026-03-01")
-    )
+    init { loadServicios() }
 
-    init { getCategorias() }
-
-    fun getCategorias() {
+    fun loadServicios() {
         viewModelScope.launch {
-            state = state.copy(isLoading = true)
-            state = state.copy(categorias = categoriasSimuladas.toList(), isLoading = false)
+            state = state.copy(isLoading = true, error = null)
+            repository.getServicios()
+                .onSuccess { list ->
+                    state = state.copy(servicios = list, isLoading = false)
+                }
+                .onFailure { e ->
+                    state = state.copy(isLoading = false, error = e.message)
+                }
         }
     }
 
-    fun toggleCategoryStatus(id: Int) {
+    fun toggleActivo(id: Int) {
         viewModelScope.launch {
-            val index = categoriasSimuladas.indexOfFirst { it.id == id }
-            if (index != -1) {
-                categoriasSimuladas[index] = categoriasSimuladas[index].copy(isActive = !categoriasSimuladas[index].isActive)
-                getCategorias()
-            }
+            val current = state.servicios.find { it.id == id } ?: return@launch
+            repository.toggleActivo(id, !current.activo)
+                .onSuccess { updated ->
+                    state = state.copy(
+                        servicios = state.servicios.map { if (it.id == id) updated else it }
+                    )
+                }
+                .onFailure { e -> state = state.copy(error = e.message) }
         }
     }
 
-    // =========================================================================
-    // NUEVA FUNCIÓN: Guarda dinámicamente una nueva categoría creada en la app
-    // =========================================================================
-    fun addCategory(name: String, description: String) {
+    fun addServicio(nombre: String, descripcion: String, precio: String) {
         viewModelScope.launch {
-            val nuevoId = (categoriasSimuladas.maxOfOrNull { it.id } ?: 0) + 1
-            val nuevaCat = Category(
-                id = nuevoId,
-                name = name,
-                slug = name.lowercase().replace(" ", "-"),
-                description = description,
-                isActive = true,
-                totalProducts = 0,
-                createdAt = "2026-06-01"
-            )
-            categoriasSimuladas.add(nuevaCat)
-            getCategorias() // Refresca la pantalla al instante
+            state = state.copy(isLoading = true, error = null)
+            val nuevo = Servicio(id = 0, nombre = nombre, descripcion = descripcion, precio = precio, activo = true)
+            repository.createServicio(nuevo)
+                .onSuccess { loadServicios() }
+                .onFailure { e -> state = state.copy(isLoading = false, error = e.message) }
+        }
+    }
+
+    fun deleteServicio(id: Int) {
+        viewModelScope.launch {
+            repository.deleteServicio(id)
+                .onSuccess { loadServicios() }
+                .onFailure { e -> state = state.copy(error = e.message) }
         }
     }
 }
 
 data class CategoryState(
-    val categorias: List<Category> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
+    val servicios: List<Servicio> = emptyList(),
+    val isLoading: Boolean        = false,
+    val error:     String?        = null,
 )

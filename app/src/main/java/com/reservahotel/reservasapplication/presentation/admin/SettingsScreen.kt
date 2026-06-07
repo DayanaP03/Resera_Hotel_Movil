@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onLogout: () -> Unit) {
     var nombreHotel by remember { mutableStateOf("Quito Real") }
     var notificaciones by remember { mutableStateOf(true) }
     var showDialog by remember { mutableStateOf(false) }
@@ -69,7 +69,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             // Fila Cerrar Sesión
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { }.padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().clickable { onLogout() }.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.ExitToApp, null, tint = MaterialTheme.colorScheme.error)

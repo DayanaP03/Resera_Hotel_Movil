@@ -24,20 +24,29 @@ class HabitacionRepositoryImpl @Inject constructor(
 
     override suspend fun getHabitacion(id: Int): Result<Habitacion> = runCatching {
         val response = api.getHabitacion(id)
-        if (response.isSuccessful) response.body()!!.toDomain()
-        else error("Error ${response.code()}")
+        if (response.isSuccessful) {
+            response.body()?.toDomain() ?: throw Exception("Habitación no encontrada")
+        } else {
+            error("Error ${response.code()}")
+        }
     }
 
     override suspend fun createHabitacion(habitacion: Habitacion): Result<Habitacion> = runCatching {
         val response = api.createHabitacion(habitacion.toDto())
-        if (response.isSuccessful) response.body()!!.toDomain()
-        else error("Error ${response.code()}: ${response.errorBody()?.string()}")
+        if (response.isSuccessful) {
+            response.body()?.toDomain() ?: throw Exception("Error al crear habitación")
+        } else {
+            error("Error ${response.code()}: ${response.errorBody()?.string()}")
+        }
     }
 
     override suspend fun updateHabitacion(id: Int, habitacion: Habitacion): Result<Habitacion> = runCatching {
         val response = api.updateHabitacion(id, habitacion.toDto())
-        if (response.isSuccessful) response.body()!!.toDomain()
-        else error("Error ${response.code()}: ${response.errorBody()?.string()}")
+        if (response.isSuccessful) {
+            response.body()?.toDomain() ?: throw Exception("Error al actualizar habitación")
+        } else {
+            error("Error ${response.code()}: ${response.errorBody()?.string()}")
+        }
     }
 
     override suspend fun deleteHabitacion(id: Int): Result<Unit> = runCatching {

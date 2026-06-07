@@ -15,58 +15,131 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.reservahotel.reservasapplication.domain.model.Usuario
 import com.reservahotel.reservasapplication.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UsersScreen(onBack: () -> Unit, viewModel: UserViewModel) {
-    var showDialog by remember { mutableStateOf(false) }
     val state = viewModel.state
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Gestión de Usuarios") }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }) },
-        floatingActionButton = { FloatingActionButton(onClick = { showDialog = true }, containerColor = Accent) { Icon(Icons.Default.Add, null) } }
+        topBar = {
+            TopAppBar(
+                title = { Text("Gestión de Usuarios") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
+                },
+            )
+        },
     ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(state.usuarios) { user -> UserCard(user, viewModel) }
-        }
-        if (showDialog) {
-            var name by remember { mutableStateOf("") }
-            var email by remember { mutableStateOf("") }
-            AlertDialog(onDismissRequest = { showDialog = false }, title = { Text("Nuevo Usuario") }, text = {
-                Column {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nombre") })
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Accent)
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    items(state.usuarios) { user ->
+                        UserCard(user = user, viewModel = viewModel)
+                    }
                 }
-            }, confirmButton = { Button(onClick = { viewModel.addUser(
-                name, email,
-                rol = TODO()
-            ); showDialog = false }) { Text("Guardar") } })
+            }
+
+            if (state.error != null) {
+                Snackbar(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                ) {
+                    Text(text = state.error)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun UserCard(user: LocalUser, viewModel: UserViewModel) {
+fun UserCard(user: Usuario, viewModel: UserViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var menuRol by remember { mutableStateOf(false) }
 
-    Card(modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded }) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+            .clickable { expanded = !expanded },
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = CircleShape, color = Accent, modifier = Modifier.size(40.dp)) { Box(contentAlignment = Alignment.Center) { Text(user.username.first().toString(), color = Color.White) } }
+                Surface(shape = CircleShape, color = Accent, modifier = Modifier.size(40.dp)) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = user.username.first().uppercase(),
+                            color = Color.White,
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(16.dp))
-                Column { Text(user.username, fontWeight = FontWeight.Bold); Text(user.email, style = MaterialTheme.typography.bodySmall) }
+                Column {
+                    Text(user.username, fontWeight = FontWeight.Bold)
+                    Text(user.email, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = if (user.isActive) "Activo" else "Inactivo",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (user.isActive) Success else Error,
+                    )
+                }
             }
+
             AnimatedVisibility(visible = expanded) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Box {
-                        AssistChip(onClick = { menuRol = true }, label = { Text(user.rol.uppercase()) })
-                        DropdownMenu(expanded = menuRol, onDismissRequest = { menuRol = false }) {
-                            listOf("admin", "staff", "cliente").forEach { r -> DropdownMenuItem(text = { Text(r) }, onClick = { viewModel.updateChangeRol(user.id, r); menuRol = false }) }
+                Column(modifier = Modifier.padding(top = 12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box {
+                            AssistChip(
+                                onClick = { menuRol = true },
+                                label = { Text(user.rol.uppercase()) },
+                            )
+                            DropdownMenu(
+                                expanded = menuRol,
+                                onDismissRequest = { menuRol = false },
+                            ) {
+                                listOf("administrador", "recepcionista", "cliente").forEach { r ->
+                                    DropdownMenuItem(
+                                        text = { Text(r.uppercase()) },
+                                        onClick = {
+                                            viewModel.updateChangeRol(user.id, r)
+                                            menuRol = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (user.isActive) "Activo" else "Inactivo",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Switch(
+                                checked = user.isActive,
+                                onCheckedChange = { viewModel.toggleUserStatus(user.id) },
+                            )
                         }
                     }
-                    Switch(checked = user.isActive, onCheckedChange = { viewModel.toggleUserStatus(user.id) })
+
+                    if (user.createdAt.isNotBlank()) {
+                        Text(
+                            text = "Registrado: ${user.createdAt}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
                 }
             }
         }

@@ -51,10 +51,26 @@ object NetworkModule {
         retrofit.create(AuthApi::class.java)
 
     @Provides @Singleton
-    fun provideCategoryApi(retrofit: Retrofit): CategoryApi =
-        retrofit.create(CategoryApi::class.java)
-
-    @Provides @Singleton
     fun provideHabitacionApi(retrofit: Retrofit): HabitacionApi =
         retrofit.create(HabitacionApi::class.java)
+
+    @Provides @Singleton
+    fun provideAdminApi(retrofit: Retrofit): AdminApi =
+        retrofit.create(AdminApi::class.java)
+
+    @Provides @Singleton
+    fun provideClienteApi(retrofit: Retrofit): ClienteApi =
+        retrofit.create(ClienteApi::class.java)
+
+    @Provides @Singleton
+    fun provideReservaApi(retrofit: Retrofit): ReservaApi =
+        retrofit.create(ReservaApi::class.java)
+
+    @Provides @Singleton
+    fun provideServicioApi(retrofit: Retrofit): ServicioApi =
+        retrofit.create(ServicioApi::class.java)
+
+    @Provides @Singleton
+    fun provideFacturaApi(retrofit: Retrofit): FacturaApi =
+        retrofit.create(FacturaApi::class.java)
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.reservahotel.reservasapplication.domain.model.Reserva
 import com.reservahotel.reservasapplication.theme.*
 
@@ -19,7 +20,7 @@ import com.reservahotel.reservasapplication.theme.*
 @Composable
 fun MisReservasScreen(
     viewModel: ReservaViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val state = viewModel.state
 
@@ -34,26 +35,36 @@ fun MisReservasScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Surface,
-                    titleContentColor = TextPrimary
-                )
+                    titleContentColor = TextPrimary,
+                ),
             )
         },
-        containerColor = Background
+        containerColor = Background,
     ) { padding ->
-        if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Accent)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(state.reservas) { reserva ->
-                    ReservaClienteItem(reserva = reserva)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            when {
+                state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Accent)
+                state.reservas.isEmpty() -> {
+                    Text(
+                        "No tenés reservas aún",
+                        modifier = Modifier.align(Alignment.Center),
+                        color = TextFaint,
+                    )
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        items(state.reservas) { reserva ->
+                            ReservaClienteItem(reserva = reserva)
+                        }
+                    }
                 }
             }
         }
@@ -62,26 +73,38 @@ fun MisReservasScreen(
 
 @Composable
 fun ReservaClienteItem(reserva: Reserva) {
+    val estadoColor = when (reserva.estado.lowercase()) {
+        "activa"     -> Success
+        "cancelada"  -> Error
+        "completada" -> Info
+        else         -> TextSecondary
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Surface),
         border = BorderStroke(1.dp, Border),
-        shape = Shapes.medium
+        shape = Shapes.medium,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Reserva #${reserva.id}", fontWeight = FontWeight.Bold, color = TextPrimary)
-            Text("Habitación: ${reserva.habitacion}", color = TextSecondary)
-            Text("Fecha: ${reserva.fecha_entrada} a ${reserva.fecha_salida}", color = TextSecondary)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Estado: ${reserva.estado}",
-                color = when(reserva.estado) {
-                    "Confirmada" -> Success
-                    "Pendiente" -> Warning
-                    else -> TextSecondary
-                },
-                fontWeight = FontWeight.Medium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text("Reserva #${reserva.id}", fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(
+                    text = reserva.estadoDisplay,
+                    color = estadoColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text("Habitación ${reserva.habitacionNumero}", color = TextSecondary, fontSize = 14.sp)
+            Text("Entrada: ${reserva.fechaEntrada}  —  Salida: ${reserva.fechaSalida}", color = TextSecondary, fontSize = 13.sp)
+            Text("${reserva.noches} noches", color = TextFaint, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Total: L. ${reserva.total}", color = Accent, fontWeight = FontWeight.Bold)
         }
     }
 }

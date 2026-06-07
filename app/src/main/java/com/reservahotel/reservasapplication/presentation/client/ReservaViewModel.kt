@@ -5,101 +5,107 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.reservahotel.reservasapplication.domain.model.Factura
 import com.reservahotel.reservasapplication.domain.model.Reserva
+import com.reservahotel.reservasapplication.domain.repository.FacturaRepository
+import com.reservahotel.reservasapplication.domain.repository.ReservaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ReservaViewModel @Inject constructor() : ViewModel() {
+class ReservaViewModel @Inject constructor(
+    private val reservaRepo: ReservaRepository,
+    private val facturaRepo: FacturaRepository,
+) : ViewModel() {
 
     var state by mutableStateOf(ReservaState())
         private set
 
-    // Lista simulada con datos de prueba adaptados a tu Reserva.kt
-    private var reservasSimuladas = mutableListOf(
-        Reserva(
-            id = 1,
-            cliente = 10, // ID ficticio del cliente Juan Pérez
-            habitacion = 101, // Habitación 101
-            servicios = listOf(1, 2), // WiFi y Desayuno
-            fecha_entrada = "2026-06-05",
-            fecha_salida = "2026-06-10",
-            estado = "Confirmada",
-            observaciones = "Cliente solicita cama adicional."
-        ),
-        Reserva(
-            id = 2,
-            cliente = 14, // ID ficticio de cliente María López
-            habitacion = 102, // Suite Presidencial
-            servicios = listOf(3), // Jacuzzi/Spa
-            fecha_entrada = "2026-06-12",
-            fecha_salida = "2026-06-15",
-            estado = "Pendiente",
-            observaciones = "Late check-in programado para las 11 PM."
-        ),
-        Reserva(
-            id = 3,
-            cliente = 22,
-            habitacion = 201,
-            servicios = emptyList(),
-            fecha_entrada = "2026-05-20",
-            fecha_salida = "2026-05-25",
-            estado = "Completada",
-            observaciones = null
-        )
-    )
-
     init {
         getReservas()
+        getFacturas()
     }
 
     fun getReservas() {
         viewModelScope.launch {
             state = state.copy(isLoading = true, error = null)
-            // .toList() para que Compose detecte cambios al agregar o eliminar
-            state = state.copy(reservas = reservasSimuladas.toList(), isLoading = false)
+            reservaRepo.getReservas()
+                .onSuccess { state = state.copy(reservas = it, isLoading = false) }
+                .onFailure { state = state.copy(isLoading = false, error = it.message) }
+        }
+    }
+
+    fun getFacturas() {
+        viewModelScope.launch {
+            facturaRepo.getFacturas()
+                .onSuccess { state = state.copy(facturas = it) }
+                .onFailure { /* silencioso, no crítico */ }
+        }
+    }
+
+    fun crearReserva(clienteId: Int, habitacionId: Int, fechaEntrada: String, fechaSalida: String) {
+        viewModelScope.launch {
+            state = state.copy(isCreating = true, errorCrear = null, successMessage = null)
+            reservaRepo.createReserva(clienteId, habitacionId, fechaEntrada, fechaSalida)
+                .onSuccess {
+                    state = state.copy(
+                        isCreating     = false,
+                        successMessage = "¡Reserva creada exitosamente!",
+                        mostrarFormReserva = false,
+                    )
+                    getReservas()
+                }
+                .onFailure {
+                    state = state.copy(isCreating = false, errorCrear = it.message)
+                }
+        }
+    }
+
+    fun cancelarReserva(id: Int) {
+        viewModelScope.launch {
+            reservaRepo.cancelarReserva(id)
+                .onSuccess { msg ->
+                    state = state.copy(successMessage = msg)
+                    getReservas()
+                }
+                .onFailure { state = state.copy(error = it.message) }
         }
     }
 
     fun deleteReserva(id: Int) {
         viewModelScope.launch {
-            reservasSimuladas.removeAll { it.id == id }
-            getReservas()
+            reservaRepo.deleteReserva(id)
+                .onSuccess { getReservas() }
+                .onFailure { state = state.copy(error = it.message) }
         }
     }
 
-    fun saveReserva(reserva: Reserva, isEdit: Boolean) {
-        viewModelScope.launch {
-            state = state.copy(isLoading = true)
-
-            if (isEdit) {
-                val index = reservasSimuladas.indexOfFirst { it.id == reserva.id }
-                if (index != -1) {
-                    reservasSimuladas[index] = reserva
-                }
-            } else {
-                val nuevoId = (reservasSimuladas.maxOfOrNull { it.id } ?: 0) + 1
-                reservasSimuladas.add(reserva.copy(id = nuevoId))
-            }
-
-            getReservas()
-            state = state.copy(isLoading = false, isSuccess = true)
-        }
+    fun abrirFormReserva(habitacionId: Int) {
+        state = state.copy(mostrarFormReserva = true, habitacionSeleccionadaId = habitacionId, errorCrear = null)
     }
 
-    fun resetSuccess() {
-        state = state.copy(isSuccess = false)
+    fun cerrarFormReserva() {
+        state = state.copy(mostrarFormReserva = false, errorCrear = null)
     }
 
-    fun getReservaById(id: Int): Reserva? {
-        return state.reservas.find { it.id == id }
+    fun clearSuccess() {
+        state = state.copy(successMessage = null)
+    }
+
+    fun clearError() {
+        state = state.copy(error = null, errorCrear = null)
     }
 }
 
 data class ReservaState(
-    val reservas: List<Reserva> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null,
-    val isSuccess: Boolean = false
+    val reservas:              List<Reserva>  = emptyList(),
+    val facturas:              List<Factura>  = emptyList(),
+    val isLoading:             Boolean        = false,
+    val isCreating:            Boolean        = false,
+    val error:                 String?        = null,
+    val errorCrear:            String?        = null,
+    val successMessage:        String?        = null,
+    val mostrarFormReserva:    Boolean        = false,
+    val habitacionSeleccionadaId: Int         = 0,
 )

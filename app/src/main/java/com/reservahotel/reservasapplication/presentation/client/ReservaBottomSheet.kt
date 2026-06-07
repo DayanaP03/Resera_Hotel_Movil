@@ -1,30 +1,157 @@
 package com.reservahotel.reservasapplication.presentation.client
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.reservahotel.reservasapplication.domain.model.Habitacion
+import com.reservahotel.reservasapplication.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservaBottomSheet(
+    habitacion: Habitacion,
+    clienteId: Int,          // ID del cliente logueado
+    isCreating: Boolean,
+    error: String?,
+    onConfirmar: (fechaEntrada: String, fechaSalida: String) -> Unit,
     onDismiss: () -> Unit,
-    onConfirmar: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(24.dp).navigationBarsPadding()) {
-            Text("Resumen de tu Reserva", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(16.dp))
-            // Aquí iría tu lógica de fechas y precio total
-            Text("Habitación: Suite Real")
-            Text("Total: $150.00")
+    var fechaEntrada by remember { mutableStateOf("") }
+    var fechaSalida  by remember { mutableStateOf("") }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
-            Button(
-                onClick = onConfirmar,
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor   = Surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .navigationBarsPadding(),
+        ) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Hotel, null, tint = Accent, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(10.dp))
+                Column {
+                    Text("Reservar Habitación", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 18.sp)
+                    Text("Habitación ${habitacion.numero} · ${habitacion.tipoDisplay}", color = TextSecondary, fontSize = 13.sp)
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // Precio
+            Surface(
+                color = Accent.copy(alpha = 0.12f),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Confirmar Reserva")
+                Text(
+                    text = "L. ${habitacion.precio_noche} por noche · Cap. ${habitacion.capacidad} personas",
+                    color = Accent,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(12.dp),
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Fecha entrada
+            Text("Fecha de entrada", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(4.dp))
+            OutlinedTextField(
+                value         = fechaEntrada,
+                onValueChange = { fechaEntrada = it },
+                placeholder   = { Text("AAAA-MM-DD", color = TextFaint) },
+                leadingIcon   = { Icon(Icons.Default.CalendarToday, null, tint = Accent) },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = Accent,
+                    unfocusedBorderColor = Border,
+                    focusedLabelColor    = Accent,
+                    cursorColor          = Accent,
+                ),
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            // Fecha salida
+            Text("Fecha de salida", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(4.dp))
+            OutlinedTextField(
+                value         = fechaSalida,
+                onValueChange = { fechaSalida = it },
+                placeholder   = { Text("AAAA-MM-DD", color = TextFaint) },
+                leadingIcon   = { Icon(Icons.Default.EventAvailable, null, tint = Accent) },
+                modifier      = Modifier.fillMaxWidth(),
+                singleLine    = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor   = Accent,
+                    unfocusedBorderColor = Border,
+                    focusedLabelColor    = Accent,
+                    cursorColor          = Accent,
+                ),
+            )
+
+            // Errores
+            val displayError = validationError ?: error
+            if (displayError != null) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Error, null, tint = Error, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(displayError, color = Error, fontSize = 12.sp)
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // Botón confirmar
+            Button(
+                onClick = {
+                    validationError = when {
+                        fechaEntrada.isBlank() -> "Ingresá la fecha de entrada"
+                        fechaSalida.isBlank()  -> "Ingresá la fecha de salida"
+                        fechaEntrada >= fechaSalida -> "La fecha de salida debe ser posterior a la entrada"
+                        else -> null
+                    }
+                    if (validationError == null) {
+                        onConfirmar(fechaEntrada, fechaSalida)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                colors   = ButtonDefaults.buttonColors(containerColor = Accent),
+                enabled  = !isCreating,
+            ) {
+                if (isCreating) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Confirmar Reserva", fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Text("Cancelar", color = TextSecondary)
             }
         }
     }
