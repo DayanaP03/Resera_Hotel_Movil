@@ -26,20 +26,21 @@ class HabitacionViewModel @Inject constructor(
             state = state.copy(isLoading = true, error = null)
             repository.getHabitaciones()
                 .onSuccess { list ->
-                    // Combinamos las del servidor con las de prueba para que siempre haya datos
-                    val availableFromServer = list.filter { it.estado.lowercase() == "disponible" }
-                    val allData = (availableFromServer + getMockHabitaciones()).distinctBy { it.numero }
+                    // Solo usamos las del servidor para evitar IDs falsos (como el 101)
+                    val availableFromServer = list.filter { 
+                        it.estado.lowercase().contains("dispon") 
+                    }
                     
                     state = state.copy(
-                        habitaciones = allData,
+                        habitaciones = availableFromServer,
                         isLoading = false,
                     )
                 }
                 .onFailure { e ->
-                    // Si falla el internet, mostramos solo las de prueba
                     state = state.copy(
-                        habitaciones = getMockHabitaciones(),
+                        habitaciones = emptyList(),
                         isLoading = false,
+                        error = e.message
                     )
                 }
         }

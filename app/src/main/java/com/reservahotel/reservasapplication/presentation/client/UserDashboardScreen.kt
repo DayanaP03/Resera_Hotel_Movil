@@ -41,56 +41,65 @@ fun UserDashboardScreen(
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = Surface,
-                tonalElevation = 8.dp
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    NavigationBarItem(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        icon = {
-                            Icon(
-                                imageVector = when (index) {
-                                    0 -> Icons.Default.Search
-                                    1 -> Icons.Default.ConfirmationNumber
-                                    else -> Icons.Default.PersonOutline
-                                },
-                                contentDescription = title,
-                            )
-                        },
-                        label = { Text(title, fontWeight = FontWeight.Medium) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Accent,
-                            selectedTextColor = Accent,
-                            indicatorColor = Accent.copy(alpha = 0.1f),
-                        ),
-                    )
+            if (userSession != null) {
+                NavigationBar(
+                    containerColor = Surface,
+                    tonalElevation = 8.dp
+                ) {
+                    tabs.forEachIndexed { index, title ->
+                        NavigationBarItem(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            icon = {
+                                Icon(
+                                    imageVector = when (index) {
+                                        0 -> Icons.Default.Search
+                                        1 -> Icons.Default.ConfirmationNumber
+                                        else -> Icons.Default.PersonOutline
+                                    },
+                                    contentDescription = title,
+                                )
+                            },
+                            label = { Text(title, fontWeight = FontWeight.Medium) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Accent,
+                                selectedTextColor = Accent,
+                                indicatorColor = Accent.copy(alpha = 0.1f),
+                            ),
+                        )
+                    }
                 }
             }
         },
         containerColor = Background,
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (selectedTab) {
-                0 -> HabitacionesScreen(
-                    onBack = onLogout,
-                    onNavigateToMisReservas = { selectedTab = 1 },
-                    viewModel = habitacionViewModel,
-                    reservaViewModel = reservaViewModel,
-                    clienteId = userSession?.id ?: 0
-                )
-                1 -> ReservasTab(
-                    viewModel = reservaViewModel,
-                    onViewFactura = { selectedReservaForFactura = it }
-                )
-                2 -> PerfilTab(
-                    username = userSession?.username ?: "",
-                    email = userSession?.email ?: "",
-                    rol = userSession?.rol ?: "cliente",
-                    onLogout = onLogout,
-                    onEditProfile = { showEditProfile = true }
-                )
+            val session = userSession
+            if (session == null) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Accent)
+                }
+            } else {
+                when (selectedTab) {
+                    0 -> HabitacionesScreen(
+                        onBack = onLogout,
+                        onNavigateToMisReservas = { selectedTab = 1 },
+                        viewModel = habitacionViewModel,
+                        reservaViewModel = reservaViewModel,
+                        clienteId = session.clienteId
+                    )
+                    1 -> ReservasTab(
+                        viewModel = reservaViewModel,
+                        onViewFactura = { selectedReservaForFactura = it }
+                    )
+                    2 -> PerfilTab(
+                        username = session.username,
+                        email = session.email,
+                        rol = session.rol,
+                        onLogout = onLogout,
+                        onEditProfile = { showEditProfile = true }
+                    )
+                }
             }
 
             if (selectedReservaForFactura != null) {

@@ -1,5 +1,6 @@
 package com.reservahotel.reservasapplication.presentation.client
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -45,7 +46,13 @@ class ReservaViewModel @Inject constructor(
     }
 
     fun crearReserva(clienteId: Int, habitacionId: Int, fechaEntrada: String, fechaSalida: String) {
+        if (clienteId <= 0) {
+            state = state.copy(errorCrear = "Error: ID de Cliente es $clienteId. Debes cerrar sesión y volver a entrar.")
+            Log.e("RESERVA_CHECK", "No se puede reservar porque clienteId es $clienteId")
+            return
+        }
         viewModelScope.launch {
+            Log.d("CLIENTE_ID", "Intentando reserva con ID de cliente: $clienteId")
             state = state.copy(isCreating = true, errorCrear = null, successMessage = null)
             reservaRepo.createReserva(clienteId, habitacionId, fechaEntrada, fechaSalida)
                 .onSuccess {

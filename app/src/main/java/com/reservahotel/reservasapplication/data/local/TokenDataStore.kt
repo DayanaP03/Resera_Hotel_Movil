@@ -22,6 +22,7 @@ class TokenDataStore @Inject constructor(
         val KEY_ACCESS   = stringPreferencesKey("access_token")
         val KEY_REFRESH  = stringPreferencesKey("refresh_token")
         val KEY_USER_ID  = intPreferencesKey("user_id")
+        val KEY_CLIENTE_ID = intPreferencesKey("cliente_id")
         val KEY_USERNAME = stringPreferencesKey("username")
         val KEY_EMAIL    = stringPreferencesKey("email")
         val KEY_ROL      = stringPreferencesKey("rol")
@@ -49,13 +50,14 @@ class TokenDataStore @Inject constructor(
         context.dataStore.edit { it[KEY_ACCESS] = access }
     }
 
-    suspend fun saveUser(id: Int, username: String, email: String, rol: String, isStaff: Boolean = false) {
+    suspend fun saveUser(id: Int, clienteId: Int, username: String, email: String, rol: String, isStaff: Boolean = false) {
         context.dataStore.edit { prefs ->
-            prefs[KEY_USER_ID]  = id
-            prefs[KEY_USERNAME] = username
-            prefs[KEY_EMAIL]    = email
-            prefs[KEY_ROL]      = rol
-            prefs[KEY_IS_STAFF] = isStaff
+            prefs[KEY_USER_ID]    = id
+            prefs[KEY_CLIENTE_ID] = clienteId
+            prefs[KEY_USERNAME]   = username
+            prefs[KEY_EMAIL]      = email
+            prefs[KEY_ROL]        = rol
+            prefs[KEY_IS_STAFF]   = isStaff
         }
     }
 
@@ -64,22 +66,26 @@ class TokenDataStore @Inject constructor(
     }
 
     data class UserSnapshot(
-        val id:       Int,
-        val username: String,
-        val email:    String,
-        val rol:      String,
-        val isStaff:  Boolean = false,
+        val id:        Int,
+        val clienteId: Int,
+        val username:  String,
+        val email:     String,
+        val rol:       String,
+        val isStaff:   Boolean = false,
     )
 
     val userSnapshot: Flow<UserSnapshot?> = context.dataStore.data.map { prefs ->
         val id = prefs[KEY_USER_ID] ?: return@map null
+        val clienteId = prefs[KEY_CLIENTE_ID] ?: 0
         val rol = prefs[KEY_ROL]?.trim()?.lowercase() ?: "cliente"
+        
         UserSnapshot(
-            id       = id,
-            username = prefs[KEY_USERNAME] ?: "",
-            email    = prefs[KEY_EMAIL]    ?: "",
-            rol      = rol,
-            isStaff  = rol == "administrador",   // derivado del rol, no del campo is_staff
+            id        = id,
+            clienteId = clienteId,
+            username  = prefs[KEY_USERNAME] ?: "",
+            email     = prefs[KEY_EMAIL]    ?: "",
+            rol       = rol,
+            isStaff   = rol == "administrador",
         )
     }
 }

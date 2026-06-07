@@ -1,5 +1,6 @@
 package com.reservahotel.reservasapplication.presentation.client
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -221,6 +222,7 @@ fun HabitacionesScreen(
             error = reservaState.errorCrear,
             onDismiss = { selectedHabitacion = null },
             onConfirmar = { entrada, salida ->
+                Log.d("UI_CLIENTE", "clienteId enviado = $clienteId")
                 reservaViewModel.crearReserva(
                     clienteId = clienteId,
                     habitacionId = selectedHabitacion!!.id,

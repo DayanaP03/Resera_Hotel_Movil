@@ -41,12 +41,20 @@ class AuthRepositoryImpl @Inject constructor(
                     "email=${userDto.email} rol=$rol isStaff(derivado)=$isStaff")
 
             tokenDataStore.saveTokens(body.access ?: "", body.refresh ?: "")
+
+            // ESTRATEGIA DE ID:
+            // Usamos el helper que busca en la raíz o dentro de 'user'
+            val finalClienteId = body.getFinalClienteId()
+
+            Log.d(TAG, "Login Exitoso: user_id=${userDto.id}, root_cliente_id=${body.rootClienteId}, user_cliente_id=${userDto.clienteId} -> FINAL=$finalClienteId")
+
             tokenDataStore.saveUser(
-                id       = userDto.id ?: 0,
-                username = userDto.username ?: "",
-                email    = userDto.email ?: "",
-                rol      = rol,
-                isStaff  = isStaff,
+                id        = userDto.id ?: 0,
+                clienteId = finalClienteId,
+                username  = userDto.username ?: "",
+                email     = userDto.email ?: "",
+                rol       = rol,
+                isStaff   = isStaff,
             )
 
             body

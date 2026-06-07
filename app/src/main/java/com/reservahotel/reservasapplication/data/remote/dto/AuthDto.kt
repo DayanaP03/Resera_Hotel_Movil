@@ -25,6 +25,7 @@ data class TokenRefreshRequest(
  */
 data class UserDto(
     val id: Int? = null,
+    @SerializedName("cliente_id") val clienteId: Int? = null,
     val username: String? = null,
     val email: String? = null,
     val rol: String? = null,
@@ -53,8 +54,14 @@ data class UserDto(
 data class AuthResponseDto(
     val access:  String?  = null,
     val refresh: String?  = null,
+    @SerializedName("cliente_id") val rootClienteId: Int? = null,
     val user:    UserDto? = null,
 ) {
+    /** Intenta obtener el cliente_id de donde sea que venga */
+    fun getFinalClienteId(): Int {
+        return rootClienteId ?: user?.clienteId ?: 0
+    }
+
     /** Normaliza por si los campos llegan en la raíz en vez del objeto user */
     fun resolvedUser(): UserDto = user ?: UserDto()
 }

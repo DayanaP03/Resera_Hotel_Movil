@@ -1,5 +1,6 @@
 package com.reservahotel.reservasapplication.data.repository
 
+import android.util.Log
 import com.reservahotel.reservasapplication.data.remote.api.ReservaApi
 import com.reservahotel.reservasapplication.data.remote.dto.ReservaCreateDto
 import com.reservahotel.reservasapplication.data.remote.dto.toDomain
@@ -25,15 +26,24 @@ class ReservaRepositoryImpl @Inject constructor(
         fechaEntrada: String,
         fechaSalida: String,
     ): Result<Unit> = runCatching {
+        Log.d("CHECK", "clienteId = $clienteId")
+
         val r = api.createReserva(
             ReservaCreateDto(
-                cliente      = clienteId,
-                habitacion   = habitacionId,
+                cliente = clienteId,
+                habitacion = habitacionId,
                 fechaEntrada = fechaEntrada,
-                fechaSalida  = fechaSalida,
+                fechaSalida = fechaSalida,
             )
         )
-        if (!r.isSuccessful) error("Error ${r.code()}: ${r.errorBody()?.string()}")
+
+        val errorBody = r.errorBody()?.string()
+        Log.e("RESERVA_ERROR", "CODIGO: ${r.code()}")
+        Log.e("RESERVA_ERROR", "BODY: ${errorBody ?: "sin error"}")
+
+        if (!r.isSuccessful) {
+            error("Error ${r.code()}: $errorBody")
+        }
     }
 
     override suspend fun cancelarReserva(id: Int): Result<String> = runCatching {

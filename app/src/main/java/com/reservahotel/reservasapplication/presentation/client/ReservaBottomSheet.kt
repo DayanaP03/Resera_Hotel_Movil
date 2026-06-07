@@ -1,5 +1,6 @@
 package com.reservahotel.reservasapplication.presentation.client
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.reservahotel.reservasapplication.domain.model.Habitacion
 import com.reservahotel.reservasapplication.theme.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +32,54 @@ fun ReservaBottomSheet(
     var fechaEntrada by remember { mutableStateOf("") }
     var fechaSalida  by remember { mutableStateOf("") }
     var validationError by remember { mutableStateOf<String?>(null) }
+
+    var showDatePickerEntrada by remember { mutableStateOf(false) }
+    var showDatePickerSalida by remember { mutableStateOf(false) }
+
+    val datePickerStateEntrada = rememberDatePickerState()
+    val datePickerStateSalida = rememberDatePickerState()
+
+    val dateFormatter = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+
+    // Dialog Entradas
+    if (showDatePickerEntrada) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePickerEntrada = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerStateEntrada.selectedDateMillis?.let {
+                        fechaEntrada = dateFormatter.format(Date(it))
+                    }
+                    showDatePickerEntrada = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePickerEntrada = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerStateEntrada)
+        }
+    }
+
+    // Dialog Salida
+    if (showDatePickerSalida) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePickerSalida = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerStateSalida.selectedDateMillis?.let {
+                        fechaSalida = dateFormatter.format(Date(it))
+                    }
+                    showDatePickerSalida = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePickerSalida = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerStateSalida)
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -74,18 +125,21 @@ fun ReservaBottomSheet(
             Spacer(Modifier.height(4.dp))
             OutlinedTextField(
                 value         = fechaEntrada,
-                onValueChange = { fechaEntrada = it },
-                placeholder   = { Text("AAAA-MM-DD", color = TextFaint) },
+                onValueChange = { },
+                readOnly      = true,
+                placeholder   = { Text("Seleccionar fecha", color = TextFaint) },
                 leadingIcon   = { Icon(Icons.Default.CalendarToday, null, tint = Accent) },
-                modifier      = Modifier.fillMaxWidth(),
-                singleLine    = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier      = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePickerEntrada = true },
+                enabled       = false,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor   = Accent,
-                    unfocusedBorderColor = Border,
-                    focusedLabelColor    = Accent,
-                    cursorColor          = Accent,
-                ),
+                    disabledTextColor = TextPrimary,
+                    disabledBorderColor = Border,
+                    disabledLeadingIconColor = Accent,
+                    disabledPlaceholderColor = TextFaint,
+                    disabledLabelColor = TextSecondary
+                )
             )
 
             Spacer(Modifier.height(12.dp))
@@ -95,18 +149,21 @@ fun ReservaBottomSheet(
             Spacer(Modifier.height(4.dp))
             OutlinedTextField(
                 value         = fechaSalida,
-                onValueChange = { fechaSalida = it },
-                placeholder   = { Text("AAAA-MM-DD", color = TextFaint) },
+                onValueChange = { },
+                readOnly      = true,
+                placeholder   = { Text("Seleccionar fecha", color = TextFaint) },
                 leadingIcon   = { Icon(Icons.Default.EventAvailable, null, tint = Accent) },
-                modifier      = Modifier.fillMaxWidth(),
-                singleLine    = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier      = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDatePickerSalida = true },
+                enabled       = false,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor   = Accent,
-                    unfocusedBorderColor = Border,
-                    focusedLabelColor    = Accent,
-                    cursorColor          = Accent,
-                ),
+                    disabledTextColor = TextPrimary,
+                    disabledBorderColor = Border,
+                    disabledLeadingIconColor = Accent,
+                    disabledPlaceholderColor = TextFaint,
+                    disabledLabelColor = TextSecondary
+                )
             )
 
             // Errores

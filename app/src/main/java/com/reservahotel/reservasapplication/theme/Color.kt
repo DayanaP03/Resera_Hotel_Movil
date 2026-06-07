@@ -2,31 +2,38 @@ package com.reservahotel.reservasapplication.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Background = Color(0xFF0A0A0F)
-val Surface = Color(0xFF111118)
-val Surface2 = Color(0xFF1A1A24)
+// Fondos
+val Background = Color(0xFF071426)
+val Surface = Color(0xFF0F1F38)
+val Surface2 = Color(0xFF162A4A)
 
-val Border = Color(0xFF2A2A38)
-val BorderLight = Color(0xFF1E1E2A)
+// Bordes
+val Border = Color(0xFF27456B)
+val BorderLight = Color(0xFF1A3454)
 
-val TextPrimary = Color(0xFFF0F0F8)
-val TextSecondary = Color(0xFF8888AA)
-val TextFaint = Color(0xFF44445A)
+// Textos
+val TextPrimary = Color(0xFFF8FAFC)
+val TextSecondary = Color(0xFFB8C5D6)
+val TextFaint = Color(0xFF7B8CA5)
 
-val Accent = Color(0xFFD4A843)
-val AccentLight = Color(0xFFF0C96E)
-val AccentDark = Color(0xFFA07820)
-val AccentOnDark = Color(0xFF0A0A0F)
+// Turquesa Premium
+val Accent = Color(0xFF00C2B8)
+val AccentLight = Color(0xFF5EEAD4)
+val AccentDark = Color(0xFF08918A)
+val AccentOnDark = Color(0xFFFFFFFF)
 
+// Estados
 val Success = Color(0xFF22C55E)
 val Warning = Color(0xFFF59E0B)
 val Error = Color(0xFFEF4444)
-val Info = Color(0xFF3B82F6)
+val Info = Color(0xFF38BDF8)
 
+// Habitaciones
 val Disponible = Color(0xFF22C55E)
 val Ocupada = Color(0xFFEF4444)
 val Mantenimiento = Color(0xFFF59E0B)
 
-val ReservaActiva = Color(0xFF3B82F6)
-val ReservaFinalizada = Color(0xFF22C55E)
-val ReservaCancelada = Color(0xFFEF4444)
+// Reservas
+val ReservaActiva = Accent
+val ReservaFinalizada = Success
+val ReservaCancelada = Error

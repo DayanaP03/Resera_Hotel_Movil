@@ -31,7 +31,7 @@ fun AddEditHabitacionScreen(
     var numero by remember { mutableStateOf(habitacionToEdit?.numero ?: "") }
     var tipo by remember { mutableStateOf(habitacionToEdit?.tipo ?: "") }
     var precio by remember { mutableStateOf(habitacionToEdit?.precio_noche ?: "") }
-    var estado by remember { mutableStateOf(habitacionToEdit?.estado ?: "Disponible") }
+    var estado by remember { mutableStateOf(habitacionToEdit?.estado ?: "disponible") }
     var capacidad by remember { mutableStateOf(habitacionToEdit?.capacidad?.toString() ?: "2") }
     var descripcion by remember { mutableStateOf(habitacionToEdit?.descripcion ?: "") }
 
@@ -65,9 +65,12 @@ fun AddEditHabitacionScreen(
                     val habitacion = Habitacion(
                         id = if (isEdit) habitacionId else 0,
                         numero = numero,
-                        tipo = tipo,
+                        tipo = tipo.trim().lowercase(),
                         precio_noche = precio,
-                        estado = estado,
+                        estado = when (estado.trim().lowercase()) {
+                            "ocupado" -> "ocupada"
+                            else -> estado.trim().lowercase()
+                        },
                         descripcion = descripcion,
                         capacidad = capacidad.toIntOrNull() ?: 2
                     )
